@@ -1,7 +1,7 @@
 /* 432Hz Audio Engine — background service worker.
    Persists settings and relays state changes to all tabs. */
 
-const DEFAULT = { enabled: false, mode: "tempo", base: 440, target: 432 };
+const DEFAULT = { enabled: false, mode: "tempo", base: 440, target: 432, preset: "432" };
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.get(["a432"], (res) => {

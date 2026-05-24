@@ -1,17 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "432Hz Audio Engine",
-  "version": "1.0.0",
-  "description": "Retunes all web audio and video to A=432Hz in real time, with selectable tempo-shift or pitch-only modes.",
-  "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "name": "Solfeggio Audio Engine (432/528Hz)",
+  "version": "2.1.0",
+  "description": "Retunes all web audio/video to A=432Hz or C=528Hz (A=444) in real time. Tempo or experimental pitch-preserving mode, with custom tuning.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     }

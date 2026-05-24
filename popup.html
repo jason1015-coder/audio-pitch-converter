@@ -60,6 +60,19 @@
   .mode-toggle button.active { background: var(--magenta); color: #fff; }
   .mode-toggle button.active.blue { background: transparent; color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
 
+  .preset-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .preset-row .field-label { margin-bottom: 0; flex-shrink: 0; }
+  #presetSelect {
+    flex: 1; background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+    font-size: 12px; font-family: var(--sans); cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%238a8a90' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  #presetSelect:focus { outline: none; border-color: var(--magenta); }
+  .input-wrap.locked { opacity: .55; }
+  .input-wrap.locked input { cursor: not-allowed; }
+
   .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 
   .pitch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
@@ -101,7 +114,7 @@
     <div class="logo">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
     </div>
-    <div class="title">432Hz Audio Engine</div>
+    <div class="title">Solfeggio Audio Engine</div>
   </div>
 
   <div class="toprow">
@@ -110,16 +123,25 @@
       <span id="enabledLabel">Disabled</span>
     </button>
     <div class="mode-toggle">
-      <button id="modeTempo" class="active">432Hz</button>
+      <button id="modeTempo" class="active">Tempo</button>
       <button id="modePitch" class="blue" title="Experimental: preserves tempo, may add mild artifacts">Pitch*</button>
     </div>
+  </div>
+
+  <div class="preset-row">
+    <label class="field-label" for="presetSelect">Preset</label>
+    <select id="presetSelect">
+      <option value="432">432 Hz · A=432 (retune down)</option>
+      <option value="528">528 Hz · A=444, C=528 (retune up)</option>
+      <option value="custom">Custom</option>
+    </select>
   </div>
 
   <div class="panel">
     <div class="pitch-grid">
       <div>
         <div class="field-label">Base Pitch</div>
-        <div class="input-wrap">
+        <div class="input-wrap" id="baseWrap">
           <input id="baseInput" type="number" value="440" min="380" max="500" />
           <span class="unit">Hz</span>
         </div>
@@ -127,7 +149,7 @@
       </div>
       <div>
         <div class="field-label">Target Pitch</div>
-        <div class="input-wrap">
+        <div class="input-wrap" id="targetWrap">
           <input id="targetInput" type="number" value="432" min="380" max="500" />
           <span class="unit">Hz</span>
         </div>
@@ -153,7 +175,7 @@
       <span class="media-count" id="mediaCount">0 media</span>
     </div>
     <div class="mode-hint" id="modeHint"></div>
-    <div style="margin-top:10px"><button class="reset" id="resetBtn">Reset to 440 → 432</button></div>
+    <div style="margin-top:10px"><button class="reset" id="resetBtn">Reset to 432 Hz preset</button></div>
   </div>
 
   <script src="popup.js"></script>
