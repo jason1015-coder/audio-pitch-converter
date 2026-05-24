@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>432Hz Audio Engine</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --panel: #141416;
+    --panel-2: #1a1a1d;
+    --border: #2a2a2e;
+    --text: #e8e8ea;
+    --muted: #8a8a90;
+    --dim: #5a5a60;
+    --magenta: #c026d3;
+    --magenta-soft: #2a1030;
+    --blue: #3b82f6;
+    --amber: #d6a23a;
+    --green: #4ade80;
+    --mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 380px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    padding: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .titlebar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .logo {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(145deg, #2a1030, #3a1545);
+    display: grid; place-items: center;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  .logo svg { width: 16px; height: 16px; color: var(--magenta); }
+  .title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+
+  .toprow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .enabled-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--magenta); color: #fff;
+    border: none; border-radius: 9px; padding: 9px 14px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s, opacity .15s;
+  }
+  .enabled-btn.off { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
+  .enabled-btn svg { width: 14px; height: 14px; }
+
+  .mode-toggle { display: flex; background: var(--panel-2); border-radius: 9px; padding: 3px; box-shadow: inset 0 0 0 1px var(--border); }
+  .mode-toggle button {
+    border: none; background: transparent; color: var(--muted);
+    font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 7px;
+    cursor: pointer; transition: all .15s; font-family: var(--sans);
+  }
+  .mode-toggle button.active { background: var(--magenta); color: #fff; }
+  .mode-toggle button.active.blue { background: transparent; color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+
+  .pitch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .field-label { font-size: 10px; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  .input-wrap { display: flex; align-items: center; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .input-wrap input {
+    flex: 1; background: transparent; border: none; color: var(--text);
+    font-family: var(--mono); font-size: 16px; font-weight: 600; padding: 8px 10px; width: 100%;
+  }
+  .input-wrap input:focus { outline: none; }
+  .input-wrap .unit { color: var(--dim); font-family: var(--mono); font-size: 13px; padding: 0 10px; background: var(--border); align-self: stretch; display: flex; align-items: center; }
+  .ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 5px; }
+
+  .readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .readout { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; }
+  .readout .val { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .readout .lbl { font-size: 9px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+  .readout.ratio .val { color: var(--text); }
+  .readout.cents .val { color: var(--amber); }
+  .readout.semis .val { color: var(--amber); }
+
+  .slider-wrap { margin-top: 14px; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--amber); cursor: pointer; box-shadow: 0 0 0 3px rgba(214,162,58,.18); }
+
+  .status { display: flex; align-items: center; justify-content: space-between; padding-top: 4px; }
+  .status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); display: inline-block; margin-right: 7px; }
+  .status .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-text { font-size: 12px; color: var(--muted); display: flex; align-items: center; }
+  .media-count { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+
+  .mode-hint { font-size: 11px; color: var(--dim); margin-top: 10px; line-height: 1.45; }
+  .reset { background: none; border: none; color: var(--dim); font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; }
+  .reset:hover { color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="titlebar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+    </div>
+    <div class="title">432Hz Audio Engine</div>
+  </div>
+
+  <div class="toprow">
+    <button id="enabledBtn" class="enabled-btn off">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+      <span id="enabledLabel">Disabled</span>
+    </button>
+    <div class="mode-toggle">
+      <button id="modeTempo" class="active">432Hz</button>
+      <button id="modePitch" class="blue" title="Experimental: preserves tempo, may add mild artifacts">Pitch*</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="pitch-grid">
+      <div>
+        <div class="field-label">Base Pitch</div>
+        <div class="input-wrap">
+          <input id="baseInput" type="number" value="440" min="380" max="500" />
+          <span class="unit">Hz</span>
+        </div>
+        <div class="ticks"><span>147Hz</span><span>440Hz</span><span>1320Hz</span></div>
+      </div>
+      <div>
+        <div class="field-label">Target Pitch</div>
+        <div class="input-wrap">
+          <input id="targetInput" type="number" value="432" min="380" max="500" />
+          <span class="unit">Hz</span>
+        </div>
+        <div class="ticks"><span>144Hz</span><span>432Hz</span><span>1296Hz</span></div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div class="readout ratio"><div class="val" id="ratioVal">0.98x</div><div class="lbl">Ratio</div></div>
+      <div class="readout cents"><div class="val" id="centsVal">−31.8¢</div><div class="lbl">Cents</div></div>
+      <div class="readout semis"><div class="val" id="semisVal">−0.3</div><div class="lbl">Semitones</div></div>
+    </div>
+
+    <div class="slider-wrap">
+      <input id="targetSlider" type="range" min="380" max="500" step="0.5" value="432" />
+      <div class="ticks"><span>380Hz</span><span id="sliderMid">432.0Hz</span><span>500Hz</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="status">
+      <span class="status-text"><span class="dot" id="statusDot"></span><span id="statusText">Engine off</span></span>
+      <span class="media-count" id="mediaCount">0 media</span>
+    </div>
+    <div class="mode-hint" id="modeHint"></div>
+    <div style="margin-top:10px"><button class="reset" id="resetBtn">Reset to 440 → 432</button></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
